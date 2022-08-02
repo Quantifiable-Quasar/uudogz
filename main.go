@@ -3,9 +3,11 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"os"
+	"os/exec"
 	"runtime"
 	"strconv"
 	"strings"
@@ -81,6 +83,15 @@ func randPass(passLen int) string {
 	return finPass
 }
 
+func changePass(username, password string) string {
+	cmd := exec.Command("chpasswd")
+	stdin, err := cmd.StdinPipe()
+	check(err)
+	_, err := io.WriteString(stdin, username+":"+password)
+	check(err)
+	fmt.Println("Password Changed Sucessfully")
+}
+
 func main() {
 	// get a list of users on the system
 	getUsers()
@@ -96,6 +107,7 @@ func main() {
 		check(err)
 		_, err2 := w.WriteString("\n")
 		check(err2)
+		changePass(element, loginMap[element])
 	}
 
 	w.Flush()
