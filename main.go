@@ -24,10 +24,11 @@ func check(e error) {
 // create a list to store usernames
 var userList []string
 
+// determine host os
+var hostOS string = runtime.GOOS
+
 // function to get a list of users on system
 func getUsers() []string {
-	// determine host os
-	hostOS := runtime.GOOS
 
 	// get the list of users for each operating system
 	if hostOS == "linux" {
@@ -83,22 +84,29 @@ func randPass(passLen int) string {
 	return finPass
 }
 
+// function to change all users passwords
 func changePass(username, password string) {
-	cmd := exec.Command("sudo", "chpasswd")
-	stdin, err := cmd.StdinPipe()
-	check(err)
+	if hostOS == "linux" {
+		// invoke chpasswd command
+		cmd := exec.Command("sudo", "chpasswd")
+		// create stdin pipe to write new logins
+		stdin, err := cmd.StdinPipe()
+		check(err)
 
-	loginToAdd := username + ":" + password + "\n"
-	fmt.Println(loginToAdd)
+		loginToAdd := username + ":" + password + "\n"
 
-	go func() {
-		defer stdin.Close()
-		io.WriteString(stdin, loginToAdd)
-	}()
-	_, err2 := cmd.CombinedOutput()
-	check(err2)
+		// little go routine to change the passwords
+		go func() {
+			defer stdin.Close()
+			io.WriteString(stdin, loginToAdd)
+		}()
+		_, err2 := cmd.CombinedOutput()
+		check(err2)
 
-	fmt.Println("Password Changed Sucessfully")
+		fmt.Println("Password Changed Sucessfully")
+	} else {
+		fmt.Println("OS: %v not supported", hostOS)
+	}
 }
 
 func main() {
@@ -106,19 +114,30 @@ func main() {
 	getUsers()
 	fmt.Println(userList)
 
+	// create map to store login info
 	loginMap := make(map[string]string)
+
+	// create out file to log changes to
 	f, err := os.Create("uudogz.out")
+
 	w := bufio.NewWriter(f)
 	check(err)
+
+	// loop through all users and change their passwords
 	for _, element := range userList {
 		loginMap[element] = randPass(20)
+
+		// write changes to log file
 		_, err := w.WriteString(element + ":" + loginMap[element])
 		check(err)
+
+		// newline for readability
 		_, err2 := w.WriteString("\n")
 		check(err2)
+
 		changePass(element, loginMap[element])
 	}
 
 	w.Flush()
-	fmt.Printf("The logins are: %v", loginMap)
+	// fmt.Printf("The logins are: %v", loginMap)
 }
