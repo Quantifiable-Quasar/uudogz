@@ -83,12 +83,21 @@ func randPass(passLen int) string {
 	return finPass
 }
 
-func changePass(username, password string) string {
-	cmd := exec.Command("chpasswd")
+func changePass(username, password string) {
+	cmd := exec.Command("sudo", "chpasswd")
 	stdin, err := cmd.StdinPipe()
 	check(err)
-	_, err := io.WriteString(stdin, username+":"+password)
-	check(err)
+
+	loginToAdd := username + ":" + password + "\n"
+	fmt.Println(loginToAdd)
+
+	go func() {
+		defer stdin.Close()
+		io.WriteString(stdin, loginToAdd)
+	}()
+	_, err2 := cmd.CombinedOutput()
+	check(err2)
+
 	fmt.Println("Password Changed Sucessfully")
 }
 
