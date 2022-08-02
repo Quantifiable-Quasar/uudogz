@@ -8,6 +8,6 @@ uudogz
 3. Loop through all the users and give new pass
 	- newPass func
 
-4. Log all new logins into a SQL database
+4. Output changes to uudogz.out 
 
-5. Encrypt database 
+5. Encrypt uudogz.out 
